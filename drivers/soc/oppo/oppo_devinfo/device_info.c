@@ -14,7 +14,7 @@
 
 #include <linux/module.h>
 #include <linux/proc_fs.h>
-#include <soc/qcom/smem.h>
+#include <linux/soc/qcom/smem.h>
 #include <soc/oppo/device_info.h>
 #include <soc/oppo/oppo_project.h>
 #include <linux/slab.h>
@@ -23,7 +23,7 @@
 #include <linux/of_gpio.h>
 #include <linux/platform_device.h>
 #include "../../../fs/proc/internal.h"
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 
 #define DEVINFO_NAME "devinfo"
 #define INFO_BUF_LEN 64

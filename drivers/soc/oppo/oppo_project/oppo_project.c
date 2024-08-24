@@ -9,18 +9,28 @@
 /*#include <mach/oppo_reserve3.h>*/
 #include <linux/io.h>
 
+#define SMEM_PROJECT	135
+
 /*****************************************************/
 static struct proc_dir_entry *oppoVersion = NULL;
 static ProjectInfoCDTType *format = NULL;
 
 void init_project_version(void)
 {
-        unsigned int len = (sizeof(ProjectInfoCDTType) + 3)&(~0x3);
+        size_t smem_size;
+        void *smem_addr;
 
-        format = (ProjectInfoCDTType *)smem_alloc(SMEM_PROJECT, len, 0, 0);
-        if (format == ERR_PTR(-EPROBE_DEFER)) {
-                format = NULL;
-        }
+        if (format)
+                return;
+
+        smem_addr = qcom_smem_get(QCOM_SMEM_HOST_ANY,
+		SMEM_PROJECT,
+		&smem_size);
+
+        if (IS_ERR(smem_addr))
+                return;
+
+        format = (ProjectInfoCDTType *)smem_addr;
 }
 
 unsigned int get_project(void)
