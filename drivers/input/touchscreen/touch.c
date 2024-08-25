@@ -39,6 +39,8 @@
 #define HX83112A_NF_FW_NAME_18315 "tp/18315/18315_FW_HX83112A_NF_Himax.img"
 #define HX83112A_NF_BASELINE_TEST_LIMIT_NAME_18315 "tp/18315/18315_Limit_data.img"
 
+extern char *saved_command_line;
+
 struct tp_dev_name tp_dev_names[] = {
    {TP_OFILM, "OFILM"},
    {TP_BIEL, "BIEL"},
@@ -72,12 +74,12 @@ struct tp_dev_name tp_dev_names[] = {
 bool __init tp_judge_ic_match(char * tp_ic_name)
 {
   pr_err("[TP] tp_ic_name = %s \n", tp_ic_name);
-  pr_err("[TP] boot_command_line = %s \n", boot_command_line);
+  pr_err("[TP] boot_command_line = %s \n", saved_command_line);
 
   switch(get_project()) {
   case OPPO_18316:
       is_tp_type_got_in_match = true;
-      if (strstr(tp_ic_name, "nt36672") && strstr(boot_command_line, "tianma_nt36672")) {
+      if (strstr(tp_ic_name, "nt36672") && strstr(saved_command_line, "tianma_nt36672")) {
           g_tp_dev_vendor = TP_TIANMA;
           #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
           g_tp_chip_name = kzalloc(sizeof(NT36672_NF_CHIP_NAME), GFP_KERNEL);
@@ -85,7 +87,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
           #endif
           return true;
       }
-      if (strstr(tp_ic_name, "nt36672") && strstr(boot_command_line, "dpt_jdi_nt36672")) {
+      if (strstr(tp_ic_name, "nt36672") && strstr(saved_command_line, "dpt_jdi_nt36672")) {
           g_tp_dev_vendor = TP_DEPUTE;
           #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
           g_tp_chip_name = kzalloc(sizeof(NT36672_NF_CHIP_NAME), GFP_KERNEL);
@@ -93,7 +95,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
           #endif
           return true;
       }
-      if (strstr(tp_ic_name, "hx83112a_nf") && strstr(boot_command_line, "himax_hx83112")) {
+      if (strstr(tp_ic_name, "hx83112a_nf") && strstr(saved_command_line, "himax_hx83112")) {
           g_tp_dev_vendor = TP_DSJM;
           #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
            g_tp_chip_name = kzalloc(sizeof(HX83112A_NF_CHIP_NAME), GFP_KERNEL);
@@ -103,7 +105,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
        }
    case OPPO_18321:
        is_tp_type_got_in_match = true;
-       if (strstr(tp_ic_name, "nt36672") && strstr(boot_command_line, "tianma_nt36672")) {
+       if (strstr(tp_ic_name, "nt36672") && strstr(saved_command_line, "tianma_nt36672")) {
            g_tp_dev_vendor = TP_TIANMA;
            #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
            g_tp_chip_name = kzalloc(sizeof(NT36672_NF_CHIP_NAME), GFP_KERNEL);
@@ -111,7 +113,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
            #endif
            return true;
        }
-       if (strstr(tp_ic_name, "hx83112a_nf") && strstr(boot_command_line, "himax_hx83112")) {
+       if (strstr(tp_ic_name, "hx83112a_nf") && strstr(saved_command_line, "himax_hx83112")) {
            g_tp_dev_vendor = TP_DSJM;
            #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
            g_tp_chip_name = kzalloc(sizeof(HX83112A_NF_CHIP_NAME), GFP_KERNEL);
@@ -119,7 +121,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
            #endif
            return true;
        }
-       if (strstr(tp_ic_name, "nt36672") && strstr(boot_command_line, "dpt_jdi_nt36672")) {
+       if (strstr(tp_ic_name, "nt36672") && strstr(saved_command_line, "dpt_jdi_nt36672")) {
            g_tp_dev_vendor = TP_DEPUTE;
            #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
            g_tp_chip_name = kzalloc(sizeof(NT36672_NF_CHIP_NAME), GFP_KERNEL);
@@ -129,7 +131,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
        }
 	/*case OPPO_18325:
        is_tp_type_got_in_match = true;
-       if (strstr(tp_ic_name, "nt36672") && strstr(boot_command_line, "tianma_nt36672")) {
+       if (strstr(tp_ic_name, "nt36672") && strstr(saved_command_line, "tianma_nt36672")) {
            g_tp_dev_vendor = TP_TIANMA;
            #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
            g_tp_chip_name = kzalloc(sizeof(NT36672_NF_CHIP_NAME), GFP_KERNEL);
@@ -137,7 +139,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
            #endif
            return true;
        }
-       if (strstr(tp_ic_name, "hx83112a_nf") && strstr(boot_command_line, "himax_hx83112")) {
+       if (strstr(tp_ic_name, "hx83112a_nf") && strstr(saved_command_line, "himax_hx83112")) {
            g_tp_dev_vendor = TP_DSJM;
            #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
            g_tp_chip_name = kzalloc(sizeof(HX83112A_NF_CHIP_NAME), GFP_KERNEL);
@@ -145,7 +147,7 @@ bool __init tp_judge_ic_match(char * tp_ic_name)
            #endif
            return true;
        }
-	if (strstr(tp_ic_name, "nt36672") && strstr(boot_command_line, "dpt_jdi_nt36672")) {
+	if (strstr(tp_ic_name, "nt36672") && strstr(saved_command_line, "dpt_jdi_nt36672")) {
            g_tp_dev_vendor = TP_DSJM;
            #ifdef CONFIG_TOUCHPANEL_MULTI_NOFLASH
            g_tp_chip_name = kzalloc(sizeof(HX83112A_NF_CHIP_NAME), GFP_KERNEL);
@@ -312,23 +314,23 @@ int tp_util_get_vendor(struct hw_resource *hw_res, struct panel_info *panel_data
        //panel_data->manufacture_info.fw_path = panel_data->fw_name;
 
        if(is_project(OPPO_18316)) {
-           if (strstr(boot_command_line, "tianma_nt36672")) {
+           if (strstr(saved_command_line, "tianma_nt36672")) {
                memcpy(panel_data->manufacture_info.version, "0xBD1671", 8);
-           }else if (strstr(boot_command_line, "dpt_jdi_nt36672")) {
+           }else if (strstr(saved_command_line, "dpt_jdi_nt36672")) {
                memcpy(panel_data->manufacture_info.version, "0xBD1672", 8);
-           }else if (strstr(boot_command_line, "himax_hx83112")) {
+           }else if (strstr(saved_command_line, "himax_hx83112")) {
                memcpy(panel_data->manufacture_info.version, "0xBD1673", 8);
            }
        }
        //memcpy(panel_data->manufacture_info.version, "0xBD1670", 8);
 
-       if (strstr(boot_command_line, "dpt_jdi_nt36672")) {    //noflash
+       if (strstr(saved_command_line, "dpt_jdi_nt36672")) {    //noflash
            panel_data->firmware_headfile.firmware_data = FW_18316_NT36672A_NF_DEPUTE;
            panel_data->firmware_headfile.firmware_size = sizeof(FW_18316_NT36672A_NF_DEPUTE);
-       }else if (strstr(boot_command_line, "tianma_nt36672")) {
+       }else if (strstr(saved_command_line, "tianma_nt36672")) {
            panel_data->firmware_headfile.firmware_data = FW_18316_NT36672A_NF_TIANMA;
            panel_data->firmware_headfile.firmware_size = sizeof(FW_18316_NT36672A_NF_TIANMA);
-       }else if (strstr(boot_command_line, "himax_hx83112")) {
+       }else if (strstr(saved_command_line, "himax_hx83112")) {
            panel_data->firmware_headfile.firmware_data = FW_18316_HX83112A_NF_DSJM;
            panel_data->firmware_headfile.firmware_size = sizeof(FW_18316_HX83112A_NF_DSJM);
        }else {
@@ -378,24 +380,24 @@ int tp_util_get_vendor(struct hw_resource *hw_res, struct panel_info *panel_data
        }
        //panel_data->manufacture_info.fw_path = panel_data->fw_name;
        if(is_project(OPPO_18321)) {
-           if (strstr(boot_command_line, "tianma_nt36672")) {
+           if (strstr(saved_command_line, "tianma_nt36672")) {
                memcpy(panel_data->manufacture_info.version, "0xBD1671", 8);
-           }else if (strstr(boot_command_line, "dpt_jdi_nt36672")) {
+           }else if (strstr(saved_command_line, "dpt_jdi_nt36672")) {
                memcpy(panel_data->manufacture_info.version, "0xBD1672", 8);
-           }else if (strstr(boot_command_line, "himax_hx83112")) {
+           }else if (strstr(saved_command_line, "himax_hx83112")) {
                memcpy(panel_data->manufacture_info.version, "0xBD1673", 8);
            }
        }
        //memcpy(panel_data->manufacture_info.version, "0xBD1670", 8);
 
 
-       if (strstr(boot_command_line, "dpt_jdi_nt36672")) {    //noflash
+       if (strstr(saved_command_line, "dpt_jdi_nt36672")) {    //noflash
            panel_data->firmware_headfile.firmware_data = FW_18316_NT36672A_NF_DEPUTE;
            panel_data->firmware_headfile.firmware_size = sizeof(FW_18316_NT36672A_NF_DEPUTE);
-       }else if (strstr(boot_command_line, "tianma_nt36672")) {
+       }else if (strstr(saved_command_line, "tianma_nt36672")) {
            panel_data->firmware_headfile.firmware_data = FW_18316_NT36672A_NF_TIANMA;
            panel_data->firmware_headfile.firmware_size = sizeof(FW_18316_NT36672A_NF_TIANMA);
-       }else if (strstr(boot_command_line, "himax_hx83112")) {
+       }else if (strstr(saved_command_line, "himax_hx83112")) {
            panel_data->firmware_headfile.firmware_data = FW_18316_HX83112A_NF_DSJM;
            panel_data->firmware_headfile.firmware_size = sizeof(FW_18316_HX83112A_NF_DSJM);
        }else {

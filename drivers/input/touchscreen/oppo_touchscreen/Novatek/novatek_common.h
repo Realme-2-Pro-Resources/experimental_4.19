@@ -1,17 +1,7 @@
-/***************************************************
- * File:nova_common.h
- * VENDOR_EDIT
- * Copyright (c)  2008- 2030  Oppo Mobile communication Corp.ltd.
- * Description:
- *             nova common driver
- * Version:1.0:
- * Date created:2017/09/18
- * Author: Cong.Dai@Bsp.Driver
- * TAG: BSP.TP.Init
- * *
- * -------------- Revision History: -----------------
- *  <author >  <data>  <version>  <desc>
- ***************************************************/
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ * Copyright (C) 2018-2020 Oplus. All rights reserved.
+ */
 
 #ifndef NOVA_H
 #define NOVA_H
@@ -66,6 +56,13 @@ struct nvt_test_header {
     signed int   config_Lmt_LPWG_Rawdata_N;
     signed int   config_Lmt_LPWG_Diff_P;
     signed int   config_Lmt_LPWG_Diff_N;
+    //fdm mode test
+    unsigned int fdm_X_Channel;
+    signed int   config_Lmt_FDM_Rawdata_P;
+    signed int   config_Lmt_FDM_Rawdata_N;
+    unsigned int config_FDM_Noise_Test_Frame;
+    signed int   config_Lmt_FDM_Diff_P;
+    signed int   config_Lmt_FDM_Diff_N;
     //offset
     unsigned int   array_Short_Rawdata_P_offset;
     unsigned int   array_Short_Rawdata_N_offset;
@@ -81,6 +78,10 @@ struct nvt_test_header {
     unsigned int   array_LPWG_Rawdata_N_offset;
     unsigned int   array_LPWG_Diff_P_offset;
     unsigned int   array_LPWG_Diff_N_offset;
+    unsigned int   array_FDM_Diff_P_offset;
+    unsigned int   array_FDM_Diff_N_offset;
+    unsigned int   array_FDM_Rawdata_P_offset;
+    unsigned int   array_FDM_Rawdata_N_offset;
     //reserve space
     signed int   reserve[16];
 };

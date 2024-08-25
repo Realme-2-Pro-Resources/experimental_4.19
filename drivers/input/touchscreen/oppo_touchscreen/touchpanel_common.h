@@ -1,16 +1,8 @@
-/**************************************************************
- * Copyright (c)  2008- 2030  Oppo Mobile communication Corp.ltd.£¬
- * VENDOR_EDIT
- * File       : touchpanel_common_driver.c
- * Description: Source file for Touch common driver
- * Version   : 1.0
- * Date        : 2016-09-02
- * Author    : Tong.han@Bsp.Group.Tp
- * TAG         : BSP.TP.Init
- * ---------------- Revision History: --------------------------
- *   <version>    <date>          < author >                            <desc>
- * Revision 1.1, 2016-09-09, Tong.han@Bsp.Group.Tp, modify based on gerrit review result(http://gerrit.scm.adc.com:8080/#/c/223721/)
- ****************************************************************/
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ * Copyright (C) 2018-2020 Oplus. All rights reserved.
+ */
+
 #ifndef _TOUCHPANEL_COMMON_H_
 #define _TOUCHPANEL_COMMON_H_
 
@@ -26,7 +18,7 @@
 #include <linux/slab.h>
 #include <linux/firmware.h>
 #include <linux/kthread.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 #include <soc/oppo/device_info.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
@@ -48,6 +40,7 @@
 
 #define PAGESIZE 512
 #define MAX_GESTURE_COORD 6
+#define MAX_FINGER_NUM 10
 
 #define UnkownGesture       0
 #define DouTap              1   // double tap
@@ -82,6 +75,8 @@
 #define MAX_DEVICE_VERSION_LENGTH 16
 #define MAX_DEVICE_MANU_LENGTH    16
 
+#define MESSAGE_SIZE              (256)
+
 #define SYNAPTICS_PREFIX    "SY_"
 #define GOODIX_PREFIX       "GT_"
 #define FOCAL_PREFIX        "FT_"
@@ -96,14 +91,14 @@
 typedef enum {
     TYPE_DELTA_IDLE,   /*means not in reading delta*/
     TYPE_DELTA_BUSY,   /*reading delta data*/
-}delta_state;
+} delta_state;
 
 typedef enum {
     TYPE_PROPERTIES = 1,   /*using board_properties*/
     TYPE_AREA_SEPRATE,     /*using same IC (button zone &&  touch zone are seprate)*/
     TYPE_DIFF_IC,          /*using diffrent IC (button zone &&  touch zone are seprate)*/
     TYPE_NO_NEED,          /*No need of virtual key process*/
-}vk_type;
+} vk_type;
 
 typedef enum {
     HEALTH_NONE,
@@ -112,7 +107,7 @@ typedef enum {
     HEALTH_UPDATARP,              /*trigger chip to update those data*/
     HEALTH_INFO_GET,              /*health_monitor node show*/
     HEALTH_LASTEXCP_GET,          /*health_monitor node show*/
-}health_ctl;
+} health_ctl;
 
 typedef enum {
     AREA_NOTOUCH,
@@ -120,14 +115,14 @@ typedef enum {
     AREA_CRITICAL,
     AREA_NORMAL,
     AREA_CORNER,
-}touch_area;
+} touch_area;
 
 typedef enum {
     CORNER_TOPLEFT,      /*When Phone Face you in portrait top left corner*/
     CORNER_TOPRIGHT,     /*When Phone Face you in portrait top right corner*/
     CORNER_BOTTOMLEFT,   /*When Phone Face you in portrait bottom left corner*/
     CORNER_BOTTOMRIGHT,  /*When Phone Face you in portrait 7bottom right corner*/
-}corner_type;
+} corner_type;
 
 typedef enum {
     MODE_NORMAL,
@@ -141,19 +136,19 @@ typedef enum {
     MODE_PALM_REJECTION,
     MODE_FACE_DETECT,
     MODE_HEADSET,
-}work_mode;
+} work_mode;
 
 typedef enum {
     FW_NORMAL,     /*fw might update, depend on the fw id*/
     FW_ABNORMAL,   /*fw abnormal, need update*/
-}fw_check_state;
+} fw_check_state;
 
 typedef enum {
     FW_UPDATE_SUCCESS,
     FW_NO_NEED_UPDATE,
     FW_UPDATE_ERROR,
     FW_UPDATE_FATAL,
-}fw_update_state;
+} fw_update_state;
 
 typedef enum {
     TP_SUSPEND_EARLY_EVENT,
@@ -161,7 +156,7 @@ typedef enum {
     TP_RESUME_EARLY_EVENT,
     TP_RESUME_COMPLETE,
     TP_SPEEDUP_RESUME_COMPLETE,
-}suspend_resume_state;
+} suspend_resume_state;
 
 typedef enum IRQ_TRIGGER_REASON {
     IRQ_IGNORE      = 0x00,
@@ -174,46 +169,46 @@ typedef enum IRQ_TRIGGER_REASON {
     IRQ_FW_AUTO_RESET = 0x40,
     IRQ_FACE_STATE    = 0x80,
     IRQ_FINGERPRINT   = 0x0100,
-}irq_reason;
+} irq_reason;
 
-typedef enum vk_bitmap{
+typedef enum vk_bitmap {
     BIT_reserve    = 0x08,
     BIT_BACK       = 0x04,
     BIT_HOME       = 0x02,
     BIT_MENU       = 0x01,
-}vk_bitmap;
+} vk_bitmap;
 
 typedef enum finger_protect_status {
     FINGER_PROTECT_TOUCH_UP,
     FINGER_PROTECT_TOUCH_DOWN,
     FINGER_PROTECT_NOTREADY,
-}fp_touch_state;
+} fp_touch_state;
 
 typedef enum debug_level {
     LEVEL_BASIC,    /*printk basic tp debug info*/
     LEVEL_DETAIL,   /*printk tp detail log for stress test*/
     LEVEL_DEBUG,    /*printk all tp debug info*/
-}tp_debug_level;
+} tp_debug_level;
 
 typedef enum resume_order {
     TP_LCD_RESUME,
     LCD_TP_RESUME,
-}tp_resume_order;
+} tp_resume_order;
 
 typedef enum suspend_order {
     TP_LCD_SUSPEND,
     LCD_TP_SUSPEND,
-}tp_suspend_order;
+} tp_suspend_order;
 
 typedef enum lcd_power {
     LCD_POWER_OFF,
     LCD_POWER_ON,
-}lcd_power_status;
+} lcd_power_status;
 
 typedef enum {
     OEM_VERIFIED_BOOT_STATE_UNLOCKED,
     OEM_VERIFIED_BOOT_STATE_LOCKED,
-}oem_verified_boot_state;
+} oem_verified_boot_state;
 
 struct Coordinate {
     int x;
@@ -224,12 +219,12 @@ typedef enum interrupt_mode {
     BANNABLE,
     UNBANNABLE,
     INTERRUPT_MODE_MAX,
-}tp_interrupt_mode;
+} tp_interrupt_mode;
 
 typedef enum switch_mode_type {
     SEQUENCE,
     SINGLE,
-}tp_switch_mode;
+} tp_switch_mode;
 
 enum touch_direction {
     VERTICAL_SCREEN,
@@ -265,8 +260,8 @@ struct corner_info {
 };
 
 struct firmware_headfile {
-        const uint8_t * firmware_data;
-        size_t firmware_size;
+    const uint8_t *firmware_data;
+    size_t firmware_size;
 };
 
 struct panel_info {
@@ -276,6 +271,8 @@ struct panel_info {
     const char  *chip_name;                         /*chip name the panel is controlled by*/
     uint32_t TP_FW;                                 /*FW Version Read from IC*/
     tp_dev  tp_type;
+    int    vid_len;                                 /*Length of tp name show in  test apk*/
+    u32    project_id;
     struct firmware_headfile firmware_headfile;     /*firmware headfile for noflash ic*/
     struct manufacture_info manufacture_info;       /*touchpanel device info*/
 };
@@ -375,7 +372,7 @@ struct spurious_fp_touch {
 struct register_info {
     uint8_t reg_length;
     uint16_t reg_addr;
-    uint8_t * reg_result;
+    uint8_t *reg_result;
 };
 
 struct black_gesture_test {
@@ -570,13 +567,13 @@ struct oppo_touchpanel_operations {
     int  (*get_chip_info)        (void *chip_data);                                           /*return 0:success;other:failed*/
     int  (*mode_switch)          (void *chip_data, work_mode mode, bool flag);                /*return 0:success;other:failed*/
     int  (*get_touch_points)     (void *chip_data, struct point_info *points, int max_num);   /*return point bit-map*/
-    int  (*get_gesture_info)     (void *chip_data, struct gesture_info * gesture);            /*return 0:success;other:failed*/
+    int  (*get_gesture_info)     (void *chip_data, struct gesture_info *gesture);             /*return 0:success;other:failed*/
     int  (*ftm_process)          (void *chip_data);                                           /*ftm boot mode process*/
     int  (*get_vendor)           (void *chip_data, struct panel_info  *panel_data);           /*distingush which panel we use, (TRULY/OFLIM/BIEL/TPK)*/
     int  (*reset)                (void *chip_data);                                           /*Reset Touchpanel*/
     int  (*reinit_device)        (void *chip_data);
     fw_check_state  (*fw_check)  (void *chip_data, struct resolution_info *resolution_info,
-                                                  struct panel_info *panel_data);             /*return < 0 :failed; 0 sucess*/
+                                  struct panel_info *panel_data);             /*return < 0 :failed; 0 sucess*/
     fw_update_state (*fw_update) (void *chip_data, const struct firmware *fw, bool force);    /*return 0 normal; return -1:update failed;*/
     int  (*power_control)        (void *chip_data, bool enable);                              /*return 0:success;other:abnormal, need to jump out*/
     int  (*reset_gpio_control)   (void *chip_data, bool enable);                              /*used for reset gpio*/
@@ -590,7 +587,7 @@ struct oppo_touchpanel_operations {
     fp_touch_state (*spurious_fp_check) (void *chip_data);                                    /*spurious fingerprint check*/
     void (*finger_proctect_data_get)    (void *chip_data);                                    /*finger protect data get*/
     void (*exit_esd_mode)        (void *chip_data);                                           /*add for s4322 exit esd mode*/
-    void (*register_info_read)(void * chip_data, uint16_t register_addr, uint8_t *result, uint8_t length);   /*add for read registers*/
+    void (*register_info_read)(void *chip_data, uint16_t register_addr, uint8_t *result, uint8_t length);    /*add for read registers*/
     void (*write_ps_status)      (void *chip_data, int ps_status);                            /*when detect iron plate, if ps is near ,enter iron plate mode;if ps is far, can not enter; exit esd mode when ps is far*/
     void (*specific_resume_operate) (void *chip_data);                                        /*some ic need specific opearation in resuming*/
     void (*resume_timedout_operate) (void *chip_data);                                        /*some ic need opearation if resume timed out*/
@@ -624,7 +621,7 @@ struct debug_info_proc_operations {
     void (*RT76)                (struct seq_file *s, void *chip_data);
     void (*RT254)               (struct seq_file *s, void *chip_data);
     void (*DRT)                 (struct seq_file *s, void *chip_data);
-    void (*gesture_rate)        (struct seq_file *s, u16* coord_arg, void *chip_data);
+    void (*gesture_rate)        (struct seq_file *s, u16 *coord_arg, void *chip_data);
 };
 
 struct invoke_method {
@@ -658,9 +655,15 @@ void esd_handle_switch(struct esd_information *esd_info, bool on);
 void clear_view_touchdown_flag(void);
 void tp_touch_btnkey_release(void);
 extern int tp_util_get_vendor(struct hw_resource *hw_res, struct panel_info *panel_data);
-extern bool tp_judge_ic_match(char * tp_ic_name);
-__attribute__((weak)) int request_firmware_select(const struct firmware **firmware_p, const char *name, struct device *device) {return 1;}
-__attribute__((weak)) int opticalfp_irq_handler(struct fp_underscreen_info *fp_tpinfo) {return 0;}
+extern bool tp_judge_ic_match(char *tp_ic_name);
+__attribute__((weak)) int request_firmware_select(const struct firmware **firmware_p, const char *name, struct device *device)
+{
+    return 1;
+}
+__attribute__((weak)) int opticalfp_irq_handler(struct fp_underscreen_info *fp_tpinfo)
+{
+    return 0;
+}
 bool is_oem_unlocked(void);
 int __init get_oem_verified_boot_state(void);
 

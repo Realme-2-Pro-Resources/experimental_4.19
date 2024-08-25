@@ -1,17 +1,8 @@
-/***************************************************
- * File:novatek_drivers_nt36672.h
- * VENDOR_EDIT
- * Copyright (c)  2017 - 2030  Oppo Mobile communication Corp.ltd.
- * Description:
- *             novatek nt36672 driver
- * Version:1.0:
- * Date created:2017-09-15
- * Author: Cong.Dai@Bsp.Driver
- * TAG: BSP.TP.Init
- * *
- * -------------- Revision History: -----------------
- *  <author >  <data>  <version>  <desc>
- ***************************************************/
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ * Copyright (C) 2018-2020 Oplus. All rights reserved.
+ */
+
 #ifndef NVT_H_NT36672_NOFLASH
 #define NVT_H_NT36672_NOFLASH
 

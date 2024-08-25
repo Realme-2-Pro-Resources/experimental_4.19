@@ -1,21 +1,14 @@
-/*****************************************************************************************
- * Copyright (c)  2017 - 2030  Oppo Mobile communication Corp.ltd.
- * VENDOR_EDIT
- * File       : novatek_drivers_nt36672.c
- * Description: Source file for novatek nt36672 driver
- * Version   : 1.0
- * Date        : 2017/10/02
- * Author    : Wanghao@Bsp.Group.Tp
- * TAG         : BSP.TP.Init
- * ---------------- Revision History: --------------------------
- *   <version>    <date>          < author >                            <desc>
- *******************************************************************************************/
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (C) 2018-2020 Oplus. All rights reserved.
+ */
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/proc_fs.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 #include <linux/input/mt.h>
 //#include <linux/wakelock.h>
 #include <linux/of_gpio.h>
@@ -431,7 +424,7 @@ return:
 *******************************************************/
 static int32_t nvt_read_pid_noflash(struct chip_data_nt36672 *chip_info)
 {
-        uint8_t buf[3] = {0};
+        uint8_t buf[4] = {0};
         int32_t ret = 0;
 
         //---set xdata index to EVENT BUF ADDR---
@@ -1177,7 +1170,7 @@ static int nvt_ftm_process(void *chip_data)
     int ret = -1;
     struct chip_data_nt36672 *chip_info = (struct chip_data_nt36672 *)chip_data;
     struct touchpanel_data *ts = spi_get_drvdata(chip_info->s_client);
-    const struct firmware *fw = NULL;
+    //const struct firmware *fw = NULL;
 
     TPD_INFO("%s is called!\n", __func__);
 
@@ -1215,11 +1208,13 @@ static int nvt_ftm_process(void *chip_data)
     }
     ret = nvt_get_chip_info(chip_info);
     if (!ret) {
-	   /* ret = request_firmware(&fw, ts->panel_data.fw_name, ts->dev);
-	    if (ret != 0) {
+    /*
+        ret = request_firmware(&fw, ts->panel_data.fw_name, ts->dev);
+        if (ret != 0) {
             TPD_INFO("%s : request test firmware failed! ret = %d\n", __func__, ret);
-        }*/
-        ret = nvt_fw_update(chip_info, fw, 0);
+        }
+    */
+        ret = nvt_fw_update(chip_info, NULL, 0);
         if(ret > 0) {
                 TPD_INFO("%s fw update failed!\n", __func__);
         } else {
@@ -1262,18 +1257,18 @@ static int nvt_get_chip_info(void *chip_data)
     return ret;
 }
 
-#ifdef CONFIG_TOUCHPANEL_MTK_PLATFORM
-extern unsigned int upmu_get_rgs_chrdet(void);
-static int nvt_get_usb_state(void)
-{
-    return upmu_get_rgs_chrdet();
-}
-#else
-static int nvt_get_usb_state(void)
-{
-    return 0;
-}
-#endif
+//#ifdef CONFIG_TOUCHPANEL_MTK_PLATFORM
+//extern unsigned int upmu_get_rgs_chrdet(void);
+//static int nvt_get_usb_state(void)
+//{
+//    return upmu_get_rgs_chrdet();
+//}
+//#else
+//static int nvt_get_usb_state(void)
+//{
+//    return 0;
+//}
+//#endif
 
 static int nvt_get_vendor(void *chip_data, struct panel_info *panel_data)
 {
@@ -2218,7 +2213,11 @@ static void store_to_file(int fd, char* format, ...)
     va_end(args);
 
     if(fd >= 0) {
+#ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
+        ksys_write(fd, buf, strlen(buf));
+#else
         sys_write(fd, buf, strlen(buf));
+#endif
     }
 }
 
@@ -2377,9 +2376,9 @@ static fw_update_state nvt_fw_update(void *chip_data, const struct firmware *fw,
     }
 */
 #ifdef CONFIG_TOUCHPANEL_MTK_PLATFORM
-    if (ts->boot_mode != RECOVERY_BOOT && !is_oem_unlocked())
+    if ((ts->boot_mode != RECOVERY_BOOT)  && !is_oem_unlocked())
 #else
-    if (ts->boot_mode != MSM_BOOT_MODE__RECOVERY && !is_oem_unlocked())
+    if ((ts->boot_mode != MSM_BOOT_MODE__RECOVERY)  && !is_oem_unlocked())
 #endif
     {
         if(ts->fw_update_app_support && force == 1) {
@@ -2676,8 +2675,13 @@ static void nvt_black_screen_test(void *chip_data, char *message)
             rtc_now_time.tm_hour, rtc_now_time.tm_min, rtc_now_time.tm_sec);
         old_fs = get_fs();
         set_fs(KERNEL_DS);
+#ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
+        ksys_mkdir("/sdcard/TpTestReport/screenOff", 0666);
+        fd = ksys_open(data_buf, O_WRONLY | O_CREAT | O_TRUNC, 0);
+#else
         sys_mkdir("/sdcard/TpTestReport/screenOff", 0666);
         fd = sys_open(data_buf, O_WRONLY | O_CREAT | O_TRUNC, 0);
+#endif
         if (fd < 0) {
                 TPD_INFO("Open log file '%s' failed.\n", data_buf);
                 err_cnt++;
@@ -2859,7 +2863,11 @@ static void nvt_black_screen_test(void *chip_data, char *message)
 
 OUT:
         if (fd >= 0) {
+#ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
+                ksys_close(fd);
+#else
                 sys_close(fd);
+#endif
         }
         set_fs(old_fs);
 
@@ -2903,7 +2911,7 @@ static struct oppo_touchpanel_operations nvt_ops = {
     .fw_check                   = nvt_fw_check,
     .fw_update                  = nvt_fw_update,
     .get_vendor                 = nvt_get_vendor,
-    .get_usb_state              = nvt_get_usb_state,
+    // .get_usb_state              = nvt_get_usb_state,
     .black_screen_test          = nvt_black_screen_test,
     .reset_gpio_control         = nvt_reset_gpio_control,
     .set_touch_direction        = nvt_set_touch_direction,
@@ -3960,7 +3968,7 @@ static int nvt_tp_probe(struct spi_device *client)
         if(ret > 0) {
             TPD_INFO("fw update failed!\n");
         }
-    }else {
+    } else {
         TPD_INFO("It's oem unlock, no-flash download fw by headfile\n");
         ret = nvt_fw_update(chip_info, NULL, 0);
         if(ret > 0) {
@@ -4063,7 +4071,9 @@ static int32_t __init nvt_driver_init(void)
     TPD_INFO("%s is called\n", __func__);
         if (!tp_judge_ic_match(TPD_DEVICE))
             return -1;
-	get_oem_verified_boot_state();
+
+    get_oem_verified_boot_state();
+
     if (spi_register_driver(&tp_spi_driver)!= 0) {
         TPD_INFO("unable to add spi driver.\n");
         return -1;
