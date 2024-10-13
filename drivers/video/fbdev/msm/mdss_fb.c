@@ -49,6 +49,26 @@
 
 #include "mdss_livedisplay.h"
 
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*
+* Guoqiang.jiang@MultiMedia.Display.LCD.Stability, 2018/10/12,
+* add for get panel serial number
+*/
+#include <soc/oppo/oppo_project.h>
+#include <soc/oppo/boot_mode.h>
+#include "mdss_dsi.h"
+#include <linux/completion.h>
+static int boot_mode = 0;
+/*
+* Guoqiang.Jiang@MultiMedia.Display.LCD.Stability, 2017/10/16,
+* add for panel status
+*/
+int lcd_closebl_flag = 0;
+
+#define PANEL_SERIAL_NUM_REG	0xA1
+#define PANEL_REG_READ_LEN		16
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MDSS_FB_NUM 3
 #else
@@ -870,6 +890,156 @@ static ssize_t msm_fb_dfps_mode_show(struct device *dev,
 	return ret;
 }
 
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+//Shengjun.Gou@PSW.MM.Display.LCD.Stability, 2017/01/24,
+//add for lcd esd test
+extern void set_esd_mode(int level);
+static ssize_t esd_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	set_esd_mode(0);
+	return sprintf(buf, "%d\n", 0);
+}
+
+//YongPeng.Yi@MultiMedia.Display.LCD.Stability, 2017/02/13,
+//add for lcd off event for ftm
+static ssize_t lcdoff_show(struct device *dev,
+        struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)fbi->par;
+
+	pr_err("%s mfd=0x%p\n", __func__, mfd);
+	if (!mfd)
+		return -ENODEV;
+
+	//YongPeng.Yi@MultiMedia.Display.LCD.Stability, 2017/02/13,
+	//add for lcd to dump for ftm
+	return mdss_fb_send_panel_event(mfd, MDSS_EVENT_DISABLE_PANEL, NULL);
+}
+
+//YongPeng.Yi@MultiMedia.Display.LCD.Stability, 2017/02/14,
+//add for lcd cabc
+extern int set_cabc(int level);
+extern int cabc_mode;
+
+static ssize_t cabc_show(struct device *dev,
+        struct device_attribute *attr, char *buf)
+{
+	if(is_lcd(OPPO18136_HIMAX_HX83112A_1080_2340_VOD_PANEL) || is_lcd(OPPO18321_DPT_NT36672A_1080_2340_VOD_PANEL))
+	{
+		return 0;
+	}
+	pr_debug(KERN_INFO "get cabc mode = %d\n",cabc_mode);
+
+	return sprintf(buf, "%d\n", cabc_mode);
+}
+
+static ssize_t cabc_store(struct device *dev,
+                               struct device_attribute *attr,
+                               const char *buf, size_t count)
+{
+	int level = 0;
+
+	if(is_lcd(OPPO18136_HIMAX_HX83112A_1080_2340_VOD_PANEL) || is_lcd(OPPO18321_DPT_NT36672A_1080_2340_VOD_PANEL))
+	{
+		return count;
+	}
+
+	sscanf(buf, "%du", &level);
+	set_cabc(level);
+	return count;
+}
+static ssize_t closebl_show(struct device *dev,
+                                struct device_attribute *attr, char *buf)
+{
+	pr_debug(KERN_INFO "get closebl flag = %d\n",lcd_closebl_flag);
+	return sprintf(buf, "%d\n", lcd_closebl_flag);
+}
+
+static ssize_t closebl_store(struct device *dev,
+                               struct device_attribute *attr,
+                               const char *buf, size_t count)
+{
+	int closebl = 0;
+	sscanf(buf, "%du", &closebl);
+	pr_err("lcd_closebl_flag = %d\n",closebl);
+	if(1 != closebl)
+		lcd_closebl_flag = 0;
+	pr_err("mdss_set_closebl_flag = %d\n",lcd_closebl_flag);
+	return count;
+}
+
+/*
+ * Gou shegnjun@PSW.MM.Display.LCD.Stability,2018/01/22,
+ * add for lcm id read
+*/
+
+static uint8_t lcm_id_addr = 0x0;
+extern void lcm_id_read(char reg_addr, char* buf, int lenth);
+
+static ssize_t lcm_id_info_store(struct device *dev,
+                               struct device_attribute *attr,
+                               const char *buf, size_t count)
+{
+	if (kstrtou8(buf, 0, &lcm_id_addr))
+	{
+		pr_err("%s kstrtouu8 buf error!\n", __func__);
+		return count;
+	}
+
+	pr_info("%s set lcm id address:0x%2x.\n", __func__, lcm_id_addr);
+
+	return count;
+}
+
+static ssize_t lcm_id_info_show(struct device *dev,
+        struct device_attribute *attr, char *buf)
+{
+	int ret = 0;
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct msm_fb_data_type *mfd = fbi->par;
+	struct mdss_panel_data *pdata = dev_get_platdata(&mfd->pdev->dev);
+	int lcm_id_read_len = 2;
+	uint8_t lcm_id_info[16] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+							   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+
+	if (!pdata)
+	{
+		pr_err("no panel connected!\n");
+		return -1;
+	}
+
+	if (mdss_panel_is_power_off(mfd->panel_power_state))
+	{
+		pr_err("panel is off, read panel reg forbidden!\n");
+		return -1;
+	}
+
+	if (0x0 != lcm_id_addr)
+	{
+		lcm_id_read(lcm_id_addr, lcm_id_info, lcm_id_read_len);
+		ret = scnprintf(buf, PAGE_SIZE, "LCM ID[%x]: 0x%x 0x%x\n", lcm_id_addr, lcm_id_info[0], lcm_id_info[1]);
+		lcm_id_addr = 0x0;
+	} else {
+		ret = scnprintf(buf, PAGE_SIZE, "LCM ID[00]: 0x00 0x00\n");
+	}
+
+	return ret;
+}
+
+extern int panel_serial_number_read(char addr, uint64_t *buf, int lenth);
+
+static DEVICE_ATTR_RO(esd);
+//YongPeng.Yi@MultiMedia.Display.LCD.Stability, 2017/02/13,
+//add for lcd off event for ftm
+static DEVICE_ATTR_RO(lcdoff);
+//YongPeng.Yi@MultiMedia.Display.LCD.Stability, 2017/02/14,
+//add for lcd cabc
+static DEVICE_ATTR_RW(cabc);
+static DEVICE_ATTR_RW(closebl);
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
 static ssize_t msm_fb_persist_mode_store(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t len)
 {
@@ -955,6 +1125,11 @@ static DEVICE_ATTR_RO(msm_fb_src_split_info);
 static DEVICE_ATTR_RW(msm_fb_thermal_level);
 static DEVICE_ATTR_RW(msm_fb_panel_status);
 static DEVICE_ATTR_RW(msm_fb_dfps_mode);
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+//Gou shengjun@PSW.MM.Display.LCD.Stability, 2017/02/15,
+//add for 16051 read LCM window info
+static DEVICE_ATTR_RW(lcm_id_info);
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 static DEVICE_ATTR_RO(measured_fps);
 static DEVICE_ATTR_RW(msm_fb_persist_mode);
 static DEVICE_ATTR_RO(idle_power_collapse);
@@ -973,6 +1148,19 @@ static struct attribute *mdss_fb_attrs[] = {
 	&dev_attr_msm_fb_dfps_mode.attr,
 	&dev_attr_measured_fps.attr,
 	&dev_attr_msm_fb_persist_mode.attr,
+	#ifdef CONFIG_PRODUCT_REALME_RMX1801
+	&dev_attr_esd.attr,
+	//YongPeng.Yi@MultiMedia.Display.LCD.Stability, 2017/02/13,
+	//add for lcd off event for ftm
+	&dev_attr_lcdoff.attr,
+	//YongPeng.Yi@MultiMedia.Display.LCD.Stability, 2017/02/14,
+	//add for lcd cabc
+	&dev_attr_cabc.attr,
+	&dev_attr_closebl.attr,
+	//Shengjun.Gou@PSW.MM.Display.LCD.Stability, 2017/02/15,
+	//add for read LCM window info
+	&dev_attr_lcm_id_info.attr,
+	#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 	&dev_attr_idle_power_collapse.attr,
 	NULL,
 };
@@ -1310,11 +1498,21 @@ static int mdss_fb_probe(struct platform_device *pdev)
 	}
 
 	mfd->ext_ad_ctrl = -1;
-	if (mfd->panel_info && mfd->panel_info->brightness_max > 0)
+	if (mfd->panel_info && mfd->panel_info->brightness_max > 0) {
 		MDSS_BRIGHT_TO_BL(mfd->bl_level, backlight_led.brightness,
 		mfd->panel_info->bl_max, mfd->panel_info->brightness_max);
-	else
+		#ifdef CONFIG_PRODUCT_REALME_RMX1801
+		//Guoqiang.Jiang@PSW.MM.Display.LCD.Stability, 2018/10/31,
+		//modify for lcd happen esd set backlight 127 before set system backlight
+		if(mfd->panel_info->bl_max > 1023){
+			mfd->bl_level = 1600;   /*for 2048 level backlight set same to lk 1600*/
+		}else{
+			mfd->bl_level = 200;	/*for 200 level backlight set same to lk 200*/
+		}
+		#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+	} else {
 		mfd->bl_level = 0;
+	}
 
 	mfd->bl_scale = 1024;
 	mfd->ad_bl_level = 0;
@@ -1430,6 +1628,15 @@ static int mdss_fb_probe(struct platform_device *pdev)
 			pr_err("failed to register input handler\n");
 
 	INIT_DELAYED_WORK(&mfd->idle_notify_work, __mdss_fb_idle_notify_work);
+
+	#ifdef CONFIG_PRODUCT_REALME_RMX1801
+	//Shengjun.Gou@PSW.MM.Display.LCD.Stability, 2017/02/14,
+	//add for silence and sau mode close bl flag
+	if((MSM_BOOT_MODE__SILENCE == get_boot_mode()) || (MSM_BOOT_MODE__SAU == get_boot_mode())){
+		pr_debug("lcd_closebl_flag = 1\n");
+		lcd_closebl_flag = 1;
+	}
+	#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 
 	return rc;
 }
@@ -1753,6 +1960,9 @@ void mdss_fb_set_backlight(struct msm_fb_data_type *mfd, u32 bkl_lvl)
 	bool ad_bl_notify_needed = false;
 	bool bl_notify_needed = false;
 
+	#ifndef CONFIG_PRODUCT_REALME_RMX1801
+	//Shengjun.Gou@PSW.MM.Display.LCD.Stability, 2017/02/14,
+	//modify for Lcd ftm mode backlight
 	if ((((mdss_fb_is_power_off(mfd) && mfd->dcm_state != DCM_ENTER)
 		|| !mfd->allow_bl_update) && !IS_CALIB_MODE_BL(mfd)) ||
 		mfd->panel_info->cont_splash_enabled) {
@@ -1763,6 +1973,23 @@ void mdss_fb_set_backlight(struct msm_fb_data_type *mfd, u32 bkl_lvl)
 	} else {
 		mfd->unset_bl_level = U32_MAX;
 	}
+	#else /*CONFIG_PRODUCT_REALME_RMX1801*/
+	boot_mode = get_boot_mode();
+	if(boot_mode == MSM_BOOT_MODE__FACTORY){
+			mfd->unset_bl_level = 0;
+	} else {
+		if ((((mdss_fb_is_power_off(mfd) && mfd->dcm_state != DCM_ENTER)
+			|| !mfd->allow_bl_update) && !IS_CALIB_MODE_BL(mfd)) ||
+			mfd->panel_info->cont_splash_enabled) {
+			mfd->unset_bl_level = bkl_lvl;
+			return;
+		} else if (mdss_fb_is_power_on(mfd) && mfd->panel_info->panel_dead) {
+			mfd->unset_bl_level = mfd->bl_level;
+		} else {
+			mfd->unset_bl_level = U32_MAX;
+		}
+	}
+	#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 
 	pdata = dev_get_platdata(&mfd->pdev->dev);
 
@@ -2004,7 +2231,11 @@ static int mdss_fb_blank_unblank(struct msm_fb_data_type *mfd)
 	}
 
 	/* Reset the backlight only if the panel was off */
+	#ifdef CONFIG_PRODUCT_REALME_RMX1801
+	if (mdss_panel_is_power_off(cur_power_state) || mdss_panel_is_power_on_lp (cur_power_state) ) {
+	#else
 	if (mdss_panel_is_power_off(cur_power_state)) {
+	#endif
 		mutex_lock(&mfd->bl_lock);
 		if (!mfd->allow_bl_update) {
 			mfd->allow_bl_update = true;
